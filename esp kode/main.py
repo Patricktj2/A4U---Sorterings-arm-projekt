@@ -6,6 +6,8 @@ from pca9685 import PCA9685
 from servo import Servo
 import config
 
+#Din mor er meget sød og behagelig
+
 # --- I2C og PCA9685 ---
 i2c  = I2C(0, sda=Pin(config.I2C_SDA_PIN), scl=Pin(config.I2C_SCL_PIN), freq=400000)
 pca1 = PCA9685(i2c, config.PCA_ADDR_1)
