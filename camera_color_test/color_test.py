@@ -1,7 +1,11 @@
 import cv2
 import numpy as np
 import time
+import requests
 from picamera2 import Picamera2
+
+ESP32_IP = "192.168.0.3"
+
 
 # Definere farver og deres grænser #
 
@@ -61,15 +65,39 @@ for farve, intervaller in COLOR_RANGES.items():
         cv2.putText(output, farve, (cx - 20, cy - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)   # Skriver farve nanvet over cirklen
         funde_farver.append((farve, cx, cy))                                                            # Gemmer farven og koordinater i listen
 
+
+def ping():
+    r = requests.get(f"http://{ESP32_IP}/ping", timeout=3)
+    print("Ping svar:", r.text)
+
+def home():
+    r = requests.post(f"http://{ESP32_IP}/home", timeout=5)
+    print("Home svar:", r.text)
+
+def sort(farve, cx, cy):
+    r = requests.post(f"http://{ESP32_IP}/sort", json={"farve": farve, "cx": cx, "cy": cy}, timeout=10)
+    print("Sort svar:", r.text)
+
+ping()
+home()
 # Billed output #
 
 if funde_farver: 
     print("Farver fundet")
-
+    svar_farver = []
     for farve, cx, cy in funde_farver:
         print(f"{farve} på pixel ({cx},{cy})") # Printer den farve som er fundet og dets koordinater på billedet
+        sort(farve, cx, cy)
+        svar_farver.append(f"Farve: {farve} | Koordinater: ({cx}, {cy})")
+    
+    print("\n Alle farver")
+    for resultat in svar_farver:
+        print(resultat)
 else:
     print("Ingen farver fundet") 
 
 cv2.imwrite("resultat.jpg", output)
 print("Billed gemt som resultat.jpg")
+
+
+
