@@ -78,26 +78,32 @@ def sort(farve, cx, cy):
     r = requests.post(f"http://{ESP32_IP}/sort", json={"farve": farve, "cx": cx, "cy": cy}, timeout=10)
     print("Sort svar:", r.text)
 
-ping()
-home()
-# Billed output #
+def sort_lokal():
+    if funde_farver: 
+        print("Farver fundet")
+        svar_farver = []
+        for farve, cx, cy in funde_farver:
+            print(f"{farve} på pixel ({cx},{cy})") # Printer den farve som er fundet og dets koordinater på billedet
+            svar_farver.append(f"Farve: {farve} | Koordinater: ({cx}, {cy})")
+        
+        print("\n Alle farver")
+        for resultat in svar_farver:
+            print(resultat)
+    else:
+        print("Ingen farver fundet") 
 
-if funde_farver: 
-    print("Farver fundet")
-    svar_farver = []
+def sort_esp():
     for farve, cx, cy in funde_farver:
-        print(f"{farve} på pixel ({cx},{cy})") # Printer den farve som er fundet og dets koordinater på billedet
         sort(farve, cx, cy)
-        svar_farver.append(f"Farve: {farve} | Koordinater: ({cx}, {cy})")
-    
-    print("\n Alle farver")
-    for resultat in svar_farver:
-        print(resultat)
-else:
-    print("Ingen farver fundet") 
+# Billed output #
 
 cv2.imwrite("resultat.jpg", output)
 print("Billed gemt som resultat.jpg")
 
-
-
+try: 
+    ping()
+    home()
+    sort_lokal()
+    sort_esp()
+except Exception as e:
+    print("Ingen forbindelse til esp, Error: ", e)
