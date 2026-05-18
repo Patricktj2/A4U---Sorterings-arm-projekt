@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import time
 import requests
+import sqlite3
 from picamera2 import Picamera2
 
 ESP32_IP = "192.168.0.3"
@@ -11,14 +12,13 @@ ESP32_IP = "192.168.0.3"
 
 COLOR_RANGES = {
     "red": [
-        (np.array([0,   120, 70]), np.array([10,  255, 255])),
-        (np.array([170, 120, 70]), np.array([180, 255, 255])),
+        (np.array([140, 120, 70]), np.array([180, 255, 255])),
     ],
     "yellow": [
-        (np.array([20, 100, 100]), np.array([35, 255, 255])),
+        (np.array([15, 80, 50]), np.array([40, 255, 255])),
     ],
     "green": [
-        (np.array([40, 70, 70]), np.array([80, 255, 255])),
+        (np.array([40, 70, 70]), np.array([90, 255, 255])),
     ],
 }
 
@@ -39,8 +39,13 @@ frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) # Laver en funktion som kaldes fr
 # Gør billed klar til behandling #
 
 output = frame.copy()
+output[380:, 597:] = 0
+output_website = frame.copy()
 hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)    # Laver en funktion som kaldes hsv som via opencv konvertere farver fra BGR til HSV
+hsv[380:, 597:] = 0
 funde_farver = []                               # Laver en tom liste som hedder funde_farver
+
+farve_tæller = {"red": 0, "yellow": 0, "green": 0}
 
 # Farve detektion for loop #
 
@@ -50,6 +55,7 @@ for farve, intervaller in COLOR_RANGES.items():
         mask |= cv2.inRange(hsv, lower, upper)     # Bruger den sorte maske med en OR (|=) til at kombinere røde pixels med den sorte maske
     
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # Scanner masken og returnere der hvor der er hvide pixels
+
     for cnt in contours:
         if cv2.contourArea(cnt) < 400: # Beregner størrelsen af de hvide pixel områder og springer over hvis det er under 400 pixels da det er støj
             continue
@@ -65,6 +71,8 @@ for farve, intervaller in COLOR_RANGES.items():
         cv2.putText(output, farve, (cx - 20, cy - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)   # Skriver farve nanvet over cirklen
         funde_farver.append((farve, cx, cy))                                                            # Gemmer farven og koordinater i listen
 
+        if farve in farve_tæller:
+            farve_tæller[farve] += 1
 
 def ping():
     r = requests.get(f"http://{ESP32_IP}/ping", timeout=3)
@@ -89,21 +97,38 @@ def sort_lokal():
         print("\n Alle farver")
         for resultat in svar_farver:
             print(resultat)
+        
+        print("\n Farve tæller")
+        for farve, antal in farve_tæller.items():
+            print(f"{farve}, {antal}")
     else:
         print("Ingen farver fundet") 
 
 def sort_esp():
     for farve, cx, cy in funde_farver:
         sort(farve, cx, cy)
+
+def sort_website():
+    conn = sqlite3.connect("/home/gruppe3/Robot_arm_web/dataarm.db")
+    cur = conn.cursor()
+    cur.execute('''CREATE TABLE IF NOT EXISTS tæller 
+                 (farve TEXT PRIMARY KEY, antal INTEGER)''')
+    for farve, antal in farve_tæller.items():
+        cur.execute('INSERT OR REPLACE INTO tæller VALUES (?, ?)', (farve, antal))
+    conn.commit()
+    conn.close()
 # Billed output #
 
 cv2.imwrite("resultat.jpg", output)
+cv2.imwrite("plade.jpg", output_website)
 print("Billed gemt som resultat.jpg")
+
+sort_lokal()
+sort_website()
 
 try: 
     ping()
     home()
-    sort_lokal()
     sort_esp()
 except Exception as e:
     print("Ingen forbindelse til esp, Error: ", e)
