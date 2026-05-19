@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block title %}
+Home
+{% endblock %}
+{% block content %}
+<p>Gruppe 3.B</p>
+Seneste sortering:
+<br>
+<p>Dato og tid: {{ dato_tid }}</p>
+
+<div style="display: flex; align-items: flex-start; gap: 30px;">
+    
+    <div>
+        <img src="../static/img/{{image}}" style="border: 5px solid orange; outline: 4px solid olive; border-radius: 10px;">
+        <br>
+
+        <a href="{{url_for('take_photo')}}" class="btn mt-3" style="background-color: orange; color: olive; border: 2px solid olive; font-weight: bold;">
+            Take photo
+        </a>
+
+        <a href="{{url_for('robot_on')}}" class="btn mt-3" style="background-color: orange; color: rgb(4, 128, 0); border: 2px solid olive; font-weight: bold;">
+            Tænd robotarm
+        </a>
+
+        <a href="{{url_for('robot_off')}}" class="btn mt-3" style="background-color: rgb(255, 165, 0); color: rgb(255, 47, 0); border: 2px solid rgb(128, 128, 0); font-weight: bold;">
+            sov robotarm
+        </a>
+    </div>
+
+    <div style="background-color: rgb(255, 165, 0); color: rgb(14, 10, 2); border: 10px solid orange; border-radius: 10px; padding: 15px; font-size: 25px; font-weight: bold; margin-top: 20px;">
+        <h3 style="color: black;">sorteret:</h3>
+
+<table style="border-collapse: collapse; background-color: orange; color: black;">
+    <tr>
+        <th style="border: 2px solid olive; padding: 10px;">Farve</th>
+        <th style="border: 2px solid olive; padding: 10px;">Antal</th>
+    </tr>
+
+    {% for row in taeller_rows %}
+    <tr>
+        {% if row[0] == "red" %}
+            <td style="border: 2px solid olive; padding: 10px; color: red; font-weight: bold;">Rød</td>
+        {% elif row[0] == "yellow" %}
+            <td style="border: 2px solid olive; padding: 10px; color: yellow; font-weight: bold;">Gul</td>
+        {% elif row[0] == "green" %}
+            <td style="border: 2px solid olive; padding: 10px; color: green; font-weight: bold;">Grøn</td>
+        {% endif %}
+
+        <td style="border: 2px solid olive; padding: 10px; font-weight: bold;">{{ row[1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</div>
+
+{% endblock %}
